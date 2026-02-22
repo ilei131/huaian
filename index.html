@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>淮安4日游 · 深度行程地图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        
+        .main-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            height: calc(100vh - 150px);
+        }
+        
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .day-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .day-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .day-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .day-btn.active {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        
+        .day1 { background: linear-gradient(135deg, #ff6b6b, #ee5a6f); color: white; }
+        .day2 { background: linear-gradient(135deg, #4ecdc4, #44a08d); color: white; }
+        .day3 { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .day4 { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+        .all-days { background: linear-gradient(135deg, #fa709a, #fee140); color: white; }
+        
+        .day-number {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .day-title {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .itinerary-detail {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px dashed #e0e0e0;
+        }
+        
+        .detail-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .spot-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .spot-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .spot-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .spot-time {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        
+        .spot-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .spot-type {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        
+        .type-culture { background: #ffe0e0; color: #c92a2a; }
+        .type-nature { background: #e0f2fe; color: #0369a1; }
+        .type-museum { background: #f3e8ff; color: #7c3aed; }
+        .type-night { background: #fef3c7; color: #d97706; }
+        .type-food { background: #dcfce7; color: #15803d; }
+        
+        .hotel-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 12px;
+        }
+        
+        .hotel-title {
+            font-weight: bold;
+            color: #8b4513;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .hotel-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .hotel-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .hotel-price {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .map-container {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+        }
+        
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+        
+        .legend-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .food-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            max-width: 200px;
+        }
+        
+        .food-title {
+            font-weight: bold;
+            color: #d97706;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .food-item {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+            padding-left: 10px;
+            border-left: 2px solid #fcd34d;
+        }
+        
+        .info-window {
+            padding: 10px;
+            max-width: 250px;
+        }
+        
+        .info-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 5px;
+        }
+        
+        .info-content {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .info-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 10px;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+        
+        .route-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            max-width: 220px;
+        }
+        
+        .route-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .route-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        @media (max-width: 968px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .sidebar {
+                max-height: 400px;
+            }
+            
+            #map {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>淮安4日游 · 深度行程地图</h1>
+            <p class="subtitle">运河古都 · 淮扬美食 · 伟人故里</p>
+        </header>
+        
+        <div class="main-layout">
+            <aside class="sidebar">
+                <div class="day-selector">
+                    <button class="day-btn all-days active" onclick="showDay(0)">
+                        <div>
+                            <div class="day-number">全部</div>
+                            <div class="day-title">显示所有行程</div>
+                        </div>
+                        <span style="font-size: 24px;">🗺️</span>
+                    </button>
+                    <button class="day-btn day1" onclick="showDay(1)">
+                        <div>
+                            <div class="day-number">Day 1</div>
+                            <div class="day-title">伟人故里·红色文化</div>
+                        </div>
+                        <span style="font-size: 20px;">🏛️</span>
+                    </button>
+                    <button class="day-btn day2" onclick="showDay(2)">
+                        <div>
+                            <div class="day-number">Day 2</div>
+                            <div class="day-title">千年古镇·运河烟火</div>
+                        </div>
+                        <span style="font-size: 20px;">🏮</span>
+                    </button>
+                    <button class="day-btn day3" onclick="showDay(3)">
+                        <div>
+                            <div class="day-number">Day 3</div>
+                            <div class="day-title">园林雅韵·城市休闲</div>
+                        </div>
+                        <span style="font-size: 20px;">🌿</span>
+                    </button>
+                    <button class="day-btn day4" onclick="showDay(4)">
+                        <div>
+                            <div class="day-number">Day 4</div>
+                            <div class="day-title">湖光山色·自然生态</div>
+                        </div>
+                        <span style="font-size: 20px;">🏞️</span>
+                    </button>
+                </div>
+                
+                <div class="itinerary-detail" id="itineraryDetail">
+                    <div class="detail-title">
+                        <span>📍</span>
+                        <span id="detailTitle">全部景点</span>
+                    </div>
+                    <div class="spot-list" id="spotList">
+                    </div>
+                </div>
+                
+                <div class="hotel-section">
+                    <div class="hotel-title">
+                        <span>🏨</span>
+                        <span>住宿推荐</span>
+                    </div>
+                    <div class="hotel-item">
+                        <div class="hotel-name">河下古镇民宿</div>
+                        <div style="color: #666; font-size: 12px;">推窗见小桥流水</div>
+                        <div class="hotel-price">¥200-400/晚</div>
+                    </div>
+                    <div class="hotel-item">
+                        <div class="hotel-name">清江浦区酒店</div>
+                        <div style="color: #666; font-size: 12px;">交通便利，近商圈</div>
+                        <div class="hotel-price">¥250-600/晚</div>
+                    </div>
+                    <div class="hotel-item">
+                        <div class="hotel-name">万达商圈酒店</div>
+                        <div style="color: #666; font-size: 12px;">购物吃饭方便</div>
+                        <div class="hotel-price">¥200-350/晚</div>
+                    </div>
+                </div>
+            </aside>
+            
+            <div class="map-container">
+                <div id="map"></div>
+                
+                <div class="food-panel">
+                    <div class="food-title">
+                        <span>🍜</span>
+                        <span>必尝美食</span>
+                    </div>
+                    <div class="food-item">软兜长鱼（老淮安）</div>
+                    <div class="food-item">蟹黄汤包（文楼）</div>
+                    <div class="food-item">平桥豆腐（古月楼）</div>
+                    <div class="food-item">盱眙小龙虾</div>
+                    <div class="food-item">钦工肉圆（李记）</div>
+                    <div class="food-item">洪泽湖小鱼锅贴</div>
+                </div>
+                
+                <div class="route-info" id="routeInfo" style="display: none;">
+                    <div class="route-title">路线信息</div>
+                    <div class="route-stats">
+                        <span>景点数: <strong id="spotCount">0</strong></span>
+                        <span>总里程: <strong id="totalDistance">0</strong>km</span>
+                    </div>
+                </div>
+                
+                <div class="map-legend">
+                    <div class="legend-title">图例说明</div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff6b6b;"></div>
+                        <span>Day 1 伟人故里</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4ecdc4;"></div>
+                        <span>Day 2 千年古镇</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #667eea;"></div>
+                        <span>Day 3 园林雅韵</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f093fb;"></div>
+                        <span>Day 4 湖光山色</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e74c3c;"></div>
+                        <span>文化古迹</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #27ae60;"></div>
+                        <span>自然风光</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: '42a8bb4e9e0454b9a72d3b631f1a6824'
+        }
+    </script>
+    <script src="https://webapi.amap.com/maps?v=2.0&key=61deb1006e9fc79ec9b55553d31558d0"></script>
+    
+    <script>
+        const spots = [
+            { day: 1, name: '周恩来纪念馆', lat: 33.5011, lng: 119.1466, type: 'culture', time: '09:00-11:30', desc: '全国爱国主义教育示范基地，周二闭馆，需预约', icon: '🏛️' },
+            { day: 1, name: '周恩来故居', lat: 33.5089, lng: 119.1412, type: 'culture', time: '13:30-15:00', desc: '周总理12岁前生活的地方，免费参观', icon: '🏠' },
+            { day: 1, name: '驸马巷', lat: 33.5095, lng: 119.1405, type: 'culture', time: '15:00-16:00', desc: '古色古香的历史文化街区', icon: '🏮' },
+            { day: 1, name: '勺湖公园', lat: 33.5056, lng: 119.1389, type: 'nature', time: '16:30-18:00', desc: '本地人私藏公园，文通塔倒映湖面', icon: '🌸' },
+            { day: 2, name: '河下古镇', lat: 33.5294, lng: 119.1617, type: 'culture', time: '08:00-10:00', desc: '2500年历史，建议7点去避人流', icon: '🏘️' },
+            { day: 2, name: '吴承恩故居', lat: 33.5283, lng: 119.1634, type: 'culture', time: '10:30-12:00', desc: '《西游记》作者故居，门票40元', icon: '🐵' },
+            { day: 2, name: '沈坤状元府', lat: 33.5278, lng: 119.1645, type: 'culture', time: '13:30-14:30', desc: '淮安首位状元府邸，门票20元', icon: '📜' },
+            { day: 2, name: '中国漕运博物馆', lat: 33.5234, lng: 119.1589, type: 'museum', time: '15:00-16:30', desc: '全息投影展示漕运历史，门票50元', icon: '🚢' },
+            { day: 2, name: '淮安府署', lat: 33.5223, lng: 119.1578, type: 'culture', time: '16:30-18:00', desc: '全国最大明清府衙，门票55元', icon: '⚖️' },
+            { day: 2, name: '里运河文化长廊', lat: 33.5156, lng: 119.1489, type: 'night', time: '19:00-21:00', desc: '夜游运河，游船50元/人', icon: '🌉' },
+            { day: 3, name: '清晏园', lat: 33.5934, lng: 119.0289, type: 'nature', time: '09:00-11:00', desc: '苏北第一园林，门票5元，6月荷花最美', icon: '🌺' },
+            { day: 3, name: '镇淮楼', lat: 33.5856, lng: 119.0356, type: 'culture', time: '11:30-12:30', desc: '淮安地标，登楼俯瞰古城，门票8元', icon: '🏯' },
+            { day: 3, name: '钵池山公园', lat: 33.6089, lng: 119.0456, type: 'nature', time: '14:00-17:00', desc: '山水相依，适合散步放松', icon: '🌳' },
+            { day: 4, name: '洪泽湖湿地', lat: 33.3234, lng: 118.8567, type: 'nature', time: '09:00-12:00', desc: '世界遗产大堤，乘船观鸟', icon: '🦢' },
+            { day: 4, name: '白马湖度假区', lat: 33.2567, lng: 119.0234, type: 'nature', time: '13:30-15:30', desc: '秋季向日葵花海，风景绝美', icon: '🌻' },
+            { day: 4, name: '铁山寺森林公园', lat: 32.9567, lng: 118.5234, type: 'nature', time: '16:00-18:00', desc: '4A级景区，秋季红叶封神', icon: '🍁' }
+        ];
+        
+        const hotels = [
+            { name: '河下古镇民宿', lat: 33.5294, lng: 119.1617, price: '¥200-400', desc: '推窗见小桥流水' },
+            { name: '淮安金陵国际酒店', lat: 33.5956, lng: 119.0412, price: '¥400-600', desc: '五星标准，交通便利' },
+            { name: '万达嘉华酒店', lat: 33.6089, lng: 119.0567, price: '¥350-500', desc: '近万达广场，购物方便' }
+        ];
+        
+        let map;
+        let markers = [];
+        let polylines = [];
+        let currentDay = 0;
+        
+        const dayColors = {
+            1: '#ff6b6b',
+            2: '#4ecdc4',
+            3: '#667eea',
+            4: '#f093fb'
+        };
+        
+        const typeColors = {
+            culture: '#e74c3c',
+            nature: '#27ae60',
+            museum: '#9b59b6',
+            night: '#f39c12',
+            food: '#e67e22'
+        };
+        
+        function initMap() {
+            map = new AMap.Map('map', {
+                zoom: 11,
+                center: [119.15, 33.5],
+                viewMode: '2D'
+            });
+            
+            showDay(0);
+        }
+        
+        function showDay(day) {
+            currentDay = day;
+            
+            document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
+            if (day === 0) {
+                document.querySelector('.all-days').classList.add('active');
+                document.getElementById('detailTitle').textContent = '全部景点';
+            } else {
+                document.querySelector(`.day${day}`).classList.add('active');
+                const titles = ['', '伟人故里·红色文化', '千年古镇·运河烟火', '园林雅韵·城市休闲', '湖光山色·自然生态'];
+                document.getElementById('detailTitle').textContent = titles[day];
+            }
+            
+            clearMap();
+            updateSpotList(day);
+            
+            const filteredSpots = day === 0 ? spots : spots.filter(s => s.day === day);
+            
+            filteredSpots.forEach((spot, index) => {
+                const marker = new AMap.Marker({
+                    position: [spot.lng, spot.lat],
+                    map: map,
+                    title: spot.name,
+                    label: {
+                        content: `<div style="background:${dayColors[spot.day]};color:white;padding:4px 8px;border-radius:4px;font-size:12px;">${spot.icon} ${spot.name}</div>`,
+                        direction: 'top'
+                    }
+                });
+                
+                const infoWindow = new AMap.InfoWindow({
+                    content: `<div class="info-window">
+                        <div class="info-title">${spot.icon} ${spot.name}</div>
+                        <div class="info-content">${spot.desc}</div>
+                        <div class="info-tag">${spot.time}</div>
+                    </div>`,
+                    offset: new AMap.Pixel(0, -30)
+                });
+                
+                marker.on('click', () => {
+                    infoWindow.open(map, marker.getPosition());
+                });
+                
+                markers.push(marker);
+            });
+            
+            if (day > 0 && filteredSpots.length > 1) {
+                const path = filteredSpots.map(s => [s.lng, s.lat]);
+                const polyline = new AMap.Polyline({
+                    path: path,
+                    strokeColor: dayColors[day],
+                    strokeWeight: 3,
+                    strokeOpacity: 0.8
+                });
+                polyline.setMap(map);
+                polylines.push(polyline);
+                
+                document.getElementById('routeInfo').style.display = 'block';
+                document.getElementById('spotCount').textContent = filteredSpots.length;
+                document.getElementById('totalDistance').textContent = '15';
+            } else {
+                document.getElementById('routeInfo').style.display = 'none';
+            }
+            
+            if (filteredSpots.length > 0) {
+                map.setFitView();
+            }
+        }
+        
+        function clearMap() {
+            markers.forEach(marker => marker.setMap(null));
+            polylines.forEach(line => line.setMap(null));
+            markers = [];
+            polylines = [];
+        }
+        
+        function updateSpotList(day) {
+            const spotList = document.getElementById('spotList');
+            const filteredSpots = day === 0 ? spots : spots.filter(s => s.day === day);
+            
+            spotList.innerHTML = filteredSpots.map(spot => `
+                <div class="spot-item" style="border-left-color: ${dayColors[spot.day]}">
+                    <div class="spot-time">${spot.time}</div>
+                    <div class="spot-name">${spot.icon} ${spot.name}</div>
+                    <span class="spot-type type-${spot.type}">${getTypeName(spot.type)}</span>
+                </div>
+            `).join('');
+        }
+        
+        function getTypeName(type) {
+            const names = {
+                culture: '文化古迹',
+                nature: '自然风光',
+                museum: '博物馆',
+                night: '夜景',
+                food: '美食'
+            };
+            return names[type] || type;
+        }
+        
+        window.onload = initMap;
+    </script>
+</body>
+</html>
