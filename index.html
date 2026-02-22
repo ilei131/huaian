@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>淮安4日游 · 深度行程地图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            padding: 10px;
+        }
+        
+        h1 {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            font-size: 1em;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        
+        /* 移动端优化布局 */
+        .main-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        /* 地图容器 - 移动端优先 */
+        .map-container {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            height: 50vh;
+            min-height: 300px;
+            order: 1;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* 控制面板 - 移动端底部 */
+        .sidebar {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            order: 2;
+        }
+        
+        /* 天数选择器 - 横向滚动 */
+        .day-selector {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        
+        .day-selector::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .day-btn {
+            flex: 0 0 auto;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-width: 80px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .day-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .day-btn.active {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+        
+        .day1 { background: linear-gradient(135deg, #ff6b6b, #ee5a6f); color: white; }
+        .day2 { background: linear-gradient(135deg, #4ecdc4, #44a08d); color: white; }
+        .day3 { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .day4 { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+        .all-days { background: linear-gradient(135deg, #fa709a, #fee140); color: white; }
+        
+        .day-number {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .day-title {
+            font-size: 11px;
+            opacity: 0.9;
+            white-space: nowrap;
+        }
+        
+        /* 行程详情 */
+        .itinerary-detail {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px dashed #e0e0e0;
+        }
+        
+        .detail-title {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: bold;
+        }
+        
+        .spot-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .spot-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .spot-item:active {
+            background: #e9ecef;
+            transform: scale(0.98);
+        }
+        
+        .spot-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .spot-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .spot-time {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+        
+        .spot-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .spot-type {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        
+        .type-culture { background: #ffe0e0; color: #c92a2a; }
+        .type-nature { background: #e0f2fe; color: #0369a1; }
+        .type-museum { background: #f3e8ff; color: #7c3aed; }
+        .type-night { background: #fef3c7; color: #d97706; }
+        .type-food { background: #dcfce7; color: #15803d; }
+        
+        /* 美食面板 - 可点击 */
+        .food-panel {
+            background: linear-gradient(135deg, #fff9e6 0%, #ffecd2 100%);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 2px solid #f59e0b;
+        }
+        
+        .food-title {
+            font-weight: bold;
+            color: #d97706;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 16px;
+        }
+        
+        .food-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .food-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .food-item:active {
+            transform: scale(0.95);
+            border-color: #f59e0b;
+            background: #fffbeb;
+        }
+        
+        .food-item .shop {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+            display: block;
+        }
+        
+        /* 地图浮层 */
+        .map-overlay {
+            position: absolute;
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            font-size: 12px;
+            max-width: 150px;
+        }
+        
+        .route-info {
+            top: 10px;
+            right: 10px;
+        }
+        
+        .route-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        
+        .route-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            color: #666;
+        }
+        
+        .map-legend {
+            bottom: 10px;
+            left: 10px;
+            max-width: 120px;
+        }
+        
+        .legend-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 12px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+            font-size: 11px;
+        }
+        
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        /* 信息窗口样式 */
+        .info-window {
+            padding: 10px;
+            max-width: 200px;
+        }
+        
+        .info-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .info-content {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        .info-content p {
+            margin-bottom: 4px;
+        }
+        
+        .info-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-top: 5px;
+            margin-right: 5px;
+        }
+        
+        /* 美食详情弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 350px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f59e0b;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .modal-close {
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .modal-close:active {
+            background: #f0f0f0;
+        }
+        
+        .modal-body {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .modal-body img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .price-tag {
+            display: inline-block;
+            background: #fef3c7;
+            color: #d97706;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        /* 平板和桌面端优化 */
+        @media (min-width: 768px) {
+            .main-layout {
+                display: grid;
+                grid-template-columns: 350px 1fr;
+                gap: 20px;
+                height: calc(100vh - 120px);
+            }
+            
+            .map-container {
+                order: 2;
+                height: 100%;
+            }
+            
+            .sidebar {
+                order: 1;
+                overflow-y: auto;
+            }
+            
+            h1 {
+                font-size: 2.2em;
+            }
+            
+            .day-selector {
+                flex-direction: column;
+                overflow-x: visible;
+            }
+            
+            .day-btn {
+                flex-direction: row;
+                justify-content: space-between;
+                min-width: auto;
+            }
+            
+            .food-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>淮安4日游 · 深度行程地图</h1>
+            <p class="subtitle">运河古都 · 淮扬美食 · 伟人故里</p>
+        </header>
+        
+        <div class="main-layout">
+            <div class="map-container">
+                <div id="map"></div>
+                
+                <div class="map-overlay route-info" id="routeInfo" style="display: none;">
+                    <div class="route-title">📍 路线信息</div>
+                    <div class="route-stats">
+                        <span>景点: <strong id="spotCount">0</strong>个</span>
+                        <span>里程: <strong id="totalDistance">0</strong>km</span>
+                    </div>
+                </div>
+                
+                <div class="map-overlay map-legend">
+                    <div class="legend-title">图例</div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff6b6b;"></div>
+                        <span>Day 1</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4ecdc4;"></div>
+                        <span>Day 2</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #667eea;"></div>
+                        <span>Day 3</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f093fb;"></div>
+                        <span>Day 4</span>
+                    </div>
+                </div>
+            </div>
+            
+            <aside class="sidebar">
+                <div class="day-selector">
+                    <button class="day-btn all-days active" onclick="showDay(0)">
+                        <span class="day-number">全部</span>
+                        <span class="day-title">所有行程</span>
+                    </button>
+                    <button class="day-btn day1" onclick="showDay(1)">
+                        <span class="day-number">Day 1</span>
+                        <span class="day-title">伟人故里</span>
+                    </button>
+                    <button class="day-btn day2" onclick="showDay(2)">
+                        <span class="day-number">Day 2</span>
+                        <span class="day-title">千年古镇</span>
+                    </button>
+                    <button class="day-btn day3" onclick="showDay(3)">
+                        <span class="day-number">Day 3</span>
+                        <span class="day-title">园林雅韵</span>
+                    </button>
+                    <button class="day-btn day4" onclick="showDay(4)">
+                        <span class="day-number">Day 4</span>
+                        <span class="day-title">湖光山色</span>
+                    </button>
+                </div>
+                
+                <div class="itinerary-detail">
+                    <div class="detail-title">
+                        <span>📍</span>
+                        <span id="detailTitle">全部景点</span>
+                    </div>
+                    <div class="spot-list" id="spotList">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+                
+                <div class="food-panel">
+                    <div class="food-title">
+                        <span>🍜</span>
+                        <span>必尝美食（点击查看详情）</span>
+                    </div>
+                    <div class="food-list" id="foodList">
+                        <!-- 动态生成 -->
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+    
+    <!-- 美食详情弹窗 -->
+    <div class="modal" id="foodModal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">美食详情</div>
+                <div class="modal-close" onclick="closeModal()">×</div>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: '42a8bb4e9e0454b9a72d3b631f1a6824'
+        }
+    </script>
+    <script src="https://webapi.amap.com/maps?v=2.0&key=61deb1006e9fc79ec9b55553d31558d0"></script>
+    
+    <script>
+        // 景点数据（包含精确坐标）
+        const spots = [
+            // Day 1: 伟人故里·红色文化
+            { day: 1, name: '周恩来纪念馆', lat: 33.516004, lng: 119.150065, type: 'culture', time: '09:00-11:30', desc: '全国爱国主义教育示范基地，周二闭馆，需预约', icon: '🏛️', address: '淮安区永怀路2号' },
+            { day: 1, name: '周恩来故居', lat: 33.506477, lng: 119.142211, type: 'culture', time: '13:30-15:00', desc: '周总理12岁前生活的地方，免费参观', icon: '🏠', address: '淮安区驸马巷7号' },
+            { day: 1, name: '驸马巷', lat: 33.506174, lng: 119.142572, type: 'culture', time: '15:00-16:00', desc: '古色古香的历史文化街区', icon: '🏮', address: '淮安区驸马巷' },
+            { day: 1, name: '勺湖公园', lat: 33.51335, lng: 119.140534, type: 'nature', time: '16:30-18:00', desc: '本地人私藏公园，文通塔倒映湖面', icon: '🌸', address: '淮安区西门大街' },
+            
+            // Day 2: 千年古镇·运河烟火
+            { day: 2, name: '河下古镇', lat: 33.527637, lng: 119.134582, type: 'culture', time: '08:00-10:00', desc: '2500年历史，建议7点去避人流', icon: '🏘️', address: '淮安区河下街道' },
+            { day: 2, name: '吴承恩故居', lat: 33.527925, lng: 119.138833, type: 'culture', time: '10:30-12:00', desc: '《西游记》作者故居，门票40元', icon: '🐵', address: '淮安区河下古镇打铜巷12号' },
+            { day: 2, name: '沈坤状元府', lat: 33.527641, lng: 119.136998, type: 'culture', time: '13:30-14:30', desc: '淮安首位状元府邸，门票20元', icon: '📜', address: '淮安区河下古镇竹巷街' },
+            { day: 2, name: '中国漕运博物馆', lat: 33.507171, lng: 119.144976, type: 'museum', time: '15:00-16:30', desc: '全息投影展示漕运历史，门票50元', icon: '🚢', address: '淮安区漕运广场' },
+            { day: 2, name: '淮安府署', lat: 33.5108, lng: 119.145777, type: 'culture', time: '16:30-18:00', desc: '全国最大明清府衙，门票55元', icon: '⚖️', address: '淮安区东门大街38号' },
+            { day: 2, name: '里运河文化长廊', lat: 33.59321, lng: 119.03815, type: 'night', time: '19:00-21:00', desc: '夜游运河，游船50元/人', icon: '🌉', address: '清江浦区里运河两岸' },
+            
+            // Day 3: 园林雅韵·城市休闲
+            { day: 3, name: '清晏园', lat: 33.585073, lng: 119.024368, type: 'nature', time: '09:00-11:00', desc: '苏北第一园林，门票5元，6月荷花最美', icon: '🌺', address: '清江浦区人民南路92号' },
+            { day: 3, name: '镇淮楼', lat: 33.50489, lng: 119.148311, type: 'culture', time: '11:30-12:30', desc: '淮安地标，登楼俯瞰古城，门票8元', icon: '🏯', address: '淮安区镇淮楼东路' },
+            { day: 3, name: '钵池山公园', lat: 33.597884, lng: 119.057025, type: 'nature', time: '14:00-17:00', desc: '山水相依，适合散步放松', icon: '🌳', address: '清江浦区水渡口大道' },
+            
+            // Day 4: 湖光山色·自然生态
+            { day: 4, name: '洪泽湖湿地', lat: 33.358957, lng: 118.857791, type: 'nature', time: '09:00-12:00', desc: '世界遗产大堤，乘船观鸟', icon: '🦢', address: '洪泽区洪泽湖大堤' },
+            { day: 4, name: '白马湖度假区', lat: 33.317836, lng: 119.047445, type: 'nature', time: '13:30-15:30', desc: '秋季向日葵花海，风景绝美', icon: '🌻', address: '洪泽区岔河镇' },
+            { day: 4, name: '铁山寺森林公园', lat: 32.738004, lng: 118.479908, type: 'nature', time: '16:00-18:00', desc: '4A级景区，秋季红叶封神', icon: '🍁', address: '盱眙县铁山寺国家森林公园' }
+        ];
+        
+        // 美食数据（带详情）
+        const foods = [
+            { 
+                name: '软兜长鱼', 
+                shop: '老淮安·淮扬菜',
+                price: '¥68-98',
+                desc: '淮扬菜代表，选用洪泽湖黄鳝，肉质鲜嫩，营养丰富。老淮安饭店位于南门大街，环境古色古香，适合家庭聚餐。',
+                features: '口感软嫩、营养丰富',
+                bestTime: '全年皆宜'
+            },
+            { 
+                name: '蟹黄汤包', 
+                shop: '文楼',
+                price: '¥20-30/个',
+                desc: '百年老字号文楼的招牌，皮薄馅大，汤汁鲜美。吃法讲究："轻轻提、慢慢移、先开窗、后喝汤"。',
+                features: '汤汁丰富、蟹香浓郁',
+                bestTime: '秋季最佳（9-11月）'
+            },
+            { 
+                name: '平桥豆腐', 
+                shop: '古月楼',
+                price: '¥38-58',
+                desc: '淮安平桥镇特产，豆腐细嫩如凝脂，配以鸡汁、火腿、香菇等，入口即化，是老人孩子的最爱。',
+                features: '口感细腻、入口即化',
+                bestTime: '全年皆宜'
+            },
+            { 
+                name: '盱眙小龙虾', 
+                shop: '红胖胖龙虾馆',
+                price: '¥88-128/份',
+                desc: '盱眙小龙虾全国闻名，十三香口味经典。红胖胖是当地知名品牌，虾肉饱满，味道正宗。',
+                features: '肉质Q弹、香辣入味',
+                bestTime: '夏季（5-8月）'
+            },
+            { 
+                name: '钦工肉圆', 
+                shop: '李记钦工肉圆',
+                price: '¥15-25/碗',
+                desc: '淮安区钦工镇特产，肉圆大如拳头，口感鲜嫩，可红烧可清炖。李记是百年老店，手艺正宗。',
+                features: '个大肉嫩、汤鲜味美',
+                bestTime: '全年皆宜'
+            },
+            { 
+                name: '洪泽湖小鱼锅贴', 
+                shop: '洪泽湖渔家乐',
+                price: '¥48-68',
+                desc: '选用洪泽湖野生小鱼，锅贴酥脆，鱼肉鲜美，是地道的湖鲜美食。',
+                features: '酥脆鲜香、湖鲜原味',
+                bestTime: '全年皆宜'
+            }
+        ];
+        
+        let map;
+        let markers = [];
+        let polylines = [];
+        let currentDay = 0;
+        
+        // 颜色配置
+        const dayColors = {
+            1: '#ff6b6b',
+            2: '#4ecdc4',
+            3: '#667eea',
+            4: '#f093fb'
+        };
+        
+        const typeColors = {
+            culture: '#e74c3c',
+            nature: '#27ae60',
+            museum: '#9b59b6',
+            night: '#f39c12',
+            food: '#e67e22'
+        };
+        
+        // 初始化
+        window.onload = function() {
+            initMap();
+            initFoodList();
+        };
+        
+        // 初始化地图
+        function initMap() {
+            map = new AMap.Map('map', {
+                zoom: 11,
+                center: [119.15, 33.5],
+                viewMode: '2D'
+            });
+            
+            // 添加地图控件
+            AMap.plugin(['AMap.ToolBar', 'AMap.Scale', 'AMap.Geolocation'], function() {
+                map.addControl(new AMap.ToolBar({
+                    position: 'RB'
+                }));
+                map.addControl(new AMap.Scale());
+                
+                // 添加定位控件
+                var geolocation = new AMap.Geolocation({
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    buttonPosition: 'RB',
+                    buttonOffset: new AMap.Pixel(10, 80),
+                    zoomToAccuracy: true
+                });
+                map.addControl(geolocation);
+            });
+            
+            showDay(0);
+        }
+        
+        // 初始化美食列表
+        function initFoodList() {
+            const foodList = document.getElementById('foodList');
+            foods.forEach((food, index) => {
+                const item = document.createElement('div');
+                item.className = 'food-item';
+                item.innerHTML = `
+                    ${food.name}
+                    <span class="shop">${food.shop}</span>
+                `;
+                item.onclick = () => showFoodDetail(index);
+                foodList.appendChild(item);
+            });
+        }
+        
+        // 显示美食详情
+        function showFoodDetail(index) {
+            const food = foods[index];
+            document.getElementById('modalTitle').innerHTML = `🍜 ${food.name}`;
+            document.getElementById('modalBody').innerHTML = `
+                <p><strong>推荐店铺：</strong>${food.shop}</p>
+                <p><strong>特色：</strong>${food.features}</p>
+                <p><strong>最佳时节：</strong>${food.bestTime}</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 10px 0;">
+                <p>${food.desc}</p>
+                <div class="price-tag">${food.price}</div>
+            `;
+            document.getElementById('foodModal').style.display = 'flex';
+        }
+        
+        // 关闭弹窗
+        function closeModal(event) {
+            if (!event || event.target.id === 'foodModal' || event.target.className === 'modal-close') {
+                document.getElementById('foodModal').style.display = 'none';
+            }
+        }
+        
+        // 显示指定天数
+        function showDay(day) {
+            currentDay = day;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.day-btn').forEach((btn, index) => {
+                if (index === day) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // 更新详情面板
+            updateDetailPanel(day);
+            
+            // 清除现有标记
+            clearMap();
+            
+            // 筛选景点
+            let displaySpots = day === 0 ? spots : spots.filter(s => s.day === day);
+            
+            // 添加标记
+            displaySpots.forEach((spot, index) => {
+                addMarker(spot, index);
+            });
+            
+            // 添加路线
+            if (day !== 0 && displaySpots.length > 1) {
+                addRoute(displaySpots, day);
+            }
+            
+            // 调整视野
+            if (displaySpots.length > 0) {
+                map.setFitView();
+            }
+            
+            // 更新路线信息
+            updateRouteInfo(displaySpots);
+        }
+        
+        // 添加景点标记
+        function addMarker(spot, index) {
+            const color = dayColors[spot.day];
+            
+            // 创建标记内容
+            const content = `
+                <div style="
+                    width: 36px;
+                    height: 36px;
+                    background: ${color};
+                    border: 3px solid white;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-weight: bold;
+                    font-size: 16px;
+                    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+                    animation: dropIn 0.5s ease ${index * 0.1}s both;
+                ">${spot.day}</div>
+            `;
+            
+            const marker = new AMap.Marker({
+                position: [spot.lng, spot.lat],
+                content: content,
+                offset: new AMap.Pixel(-18, -18),
+                extData: spot,
+                animation: 'AMAP_ANIMATION_DROP'
+            });
+            
+            // 信息窗口
+            const infoWindow = new AMap.InfoWindow({
+                content: `
+                    <div class="info-window">
+                        <div class="info-title">${spot.icon} ${spot.name}</div>
+                        <div class="info-content">
+                            <p>📍 ${spot.address}</p>
+                            <p>🕐 ${spot.time}</p>
+                            <p>${spot.desc}</p>
+                            <span class="info-tag" style="background: ${color}">Day ${spot.day}</span>
+                            <span class="info-tag" style="background: ${typeColors[spot.type]}">${getTypeName(spot.type)}</span>
+                        </div>
+                    </div>
+                `,
+                offset: new AMap.Pixel(0, -35)
+            });
+            
+            marker.on('click', function() {
+                infoWindow.open(map, marker.getPosition());
+            });
+            
+            marker.setMap(map);
+            markers.push(marker);
+        }
+        
+        // 添加路线
+        function addRoute(spots, day) {
+            const path = spots.map(s => [s.lng, s.lat]);
+            const color = dayColors[day];
+            
+            const polyline = new AMap.Polyline({
+                path: path,
+                strokeColor: color,
+                strokeWeight: 5,
+                strokeOpacity: 0.8,
+                strokeStyle: 'solid',
+                showDir: true,
+                dirColor: 'white',
+                lineJoin: 'round'
+            });
+            
+            polyline.setMap(map);
+            polylines.push(polyline);
+        }
+        
+        // 清除地图
+        function clearMap() {
+            markers.forEach(m => m.setMap(null));
+            polylines.forEach(p => p.setMap(null));
+            markers = [];
+            polylines = [];
+        }
+        
+        // 更新详情面板
+        function updateDetailPanel(day) {
+            const titles = ['全部景点', 'Day 1: 伟人故里·红色文化', 'Day 2: 千年古镇·运河烟火', 'Day 3: 园林雅韵·城市休闲', 'Day 4: 湖光山色·自然生态'];
+            document.getElementById('detailTitle').textContent = titles[day];
+            
+            const spotList = document.getElementById('spotList');
+            spotList.innerHTML = '';
+            
+            let displaySpots = day === 0 ? spots : spots.filter(s => s.day === day);
+            
+            displaySpots.forEach(spot => {
+                const item = document.createElement('div');
+                item.className = 'spot-item';
+                item.style.borderLeftColor = dayColors[spot.day];
+                item.innerHTML = `
+                    <div class="spot-icon">${spot.icon}</div>
+                    <div class="spot-info">
+                        <div class="spot-time">${spot.time}</div>
+                        <div class="spot-name">${spot.name}</div>
+                        <span class="spot-type type-${spot.type}">${getTypeName(spot.type)}</span>
+                    </div>
+                `;
+                item.onclick = () => {
+                    map.setCenter([spot.lng, spot.lat]);
+                    map.setZoom(16);
+                    // 触发对应marker的点击事件
+                    markers.forEach(m => {
+                        if (m.getExtData().name === spot.name) {
+                            m.emit('click');
+                        }
+                    });
+                };
+                spotList.appendChild(item);
+            });
+        }
+        
+        // 获取类型名称
+        function getTypeName(type) {
+            const names = {
+                culture: '文化古迹',
+                nature: '自然风光',
+                museum: '博物馆',
+                night: '夜景夜游',
+                food: '美食体验'
+            };
+            return names[type] || type;
+        }
+        
+        // 更新路线信息
+        function updateRouteInfo(displaySpots) {
+            const routeInfo = document.getElementById('routeInfo');
+            if (displaySpots.length > 0) {
+                routeInfo.style.display = 'block';
+                document.getElementById('spotCount').textContent = displaySpots.length;
+                
+                if (displaySpots.length > 1) {
+                    let totalDist = 0;
+                    for (let i = 0; i < displaySpots.length - 1; i++) {
+                        const d = getDistance(displaySpots[i], displaySpots[i+1]);
+                        totalDist += d;
+                    }
+                    document.getElementById('totalDistance').textContent = totalDist.toFixed(1);
+                } else {
+                    document.getElementById('totalDistance').textContent = '0';
+                }
+            } else {
+                routeInfo.style.display = 'none';
+            }
+        }
+        
+        // 计算两点距离（km）
+        function getDistance(p1, p2) {
+            const R = 6371;
+            const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+            const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+    </script>
+</body>
+</html>
